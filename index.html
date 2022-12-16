@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Own your priviledge</title>
+        <link rel="manifest" href="manifest.json">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Own your priviledge">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+        <style type="text/css">
+            body {
+                padding: 0;
+                margin: 0;
+                font-family: sans-serif;
+            }
+            canvas#can, main {
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: black;
+                color: white;
+            }
+
+            main {
+                width: calc(100% - 4em);
+                height: calc(100% - 4em);
+                padding: 2em;
+            }
+        </style>
+    </head>
+    <body>
+        <aside>
+            <h2>Gefeliciteerd!</h2>
+            <p>
+                Je hebt alle 7 vinkjes verzameld!
+            </p>
+        </aside>
+        <canvas id="can"></canvas>
+        <main>
+            <h1>Welkom bij Own Your Priviledge</h1>
+            <ol>
+                <li>Beweeg de vinkschieter door met je vinger heen en weer te bewegen</li>
+                <li>Probeer alle aanvinkhokjes te raken</li>
+            </ol>
+        </main>
+
+    </body>
+    <script>
+        const can = document.getElementById("can");
+
+        const pointWithinBox = ({x, y}, {x : bL, y : bT, w, h}) =>
+            x >= bL && x <= bL + w && y >= bT && y <= bT + h;
+        
+        document.querySelector("main").addEventListener("touchstart", (ev) => {
+            document.querySelector("main").style.display = "none";
+            const ctx = can.getContext("2d");
+            const state = {
+                x: 0,
+                dots: [],
+                checkboxes: [],
+                checkedBoxes: []
+            }
+
+            function render() {
+                requestAnimationFrame(render);
+                ctx.clearRect(0, 0, can.width, can.height);
+
+                ctx.fillStyle = "green";
+                state.dots.forEach((dot) => {
+                    ctx.fillRect(dot.x - 2, dot.y - 2, 4, 4);
+                })
+
+                
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 1;
+                state.checkboxes.forEach((ch) => {
+                    ctx.strokeRect(ch.x - 5, ch.y - 5,  10, 10)
+                })
+                ctx.lineWidth = 2;
+                state.checkedBoxes.forEach((ch) => {
+                    ctx.strokeRect(ch.x - 10, ch.y - 10,  20, 20)
+                })
+                ctx.fillStyle = "white";
+                ctx.fillRect(state.x - 15, can.height - 10, 30, 10);
+            }
+
+            requestAnimationFrame(render);
+            function startDot() {
+                const dot = {
+                    x: state.x,
+                    y: can.height,
+                    checked: false
+                }
+                state.dots.push(dot);
+            }
+
+            window.setInterval(startDot, 1000);
+            startDot()
+            function startCheckbox() {
+                const checkbox = {
+                    x: Math.floor(Math.random() * (can.width - 20)) + 10,
+                    y: 0,
+                    checked: false
+                }
+                state.checkboxes.push(checkbox);
+            }
+            window.setInterval(startCheckbox, 1000);
+            startCheckbox();
+
+            function updateFrame() {
+                state.dots.forEach((dot) => { 
+                    dot.y -= 10; 
+                    const hitCh = state.checkboxes.find((ch) => pointWithinBox(dot, {x: ch.x - 5 , y: ch.y - 5 , w: 10 , h: 10}));
+                    if (hitCh && state.checkedBoxes.length < 7) {
+                        hitCh.checked = true;
+                        dot.checked = true;
+                        state.checkedBoxes.push({
+                            x: hitCh.x,
+                            y: hitCh.y
+                        })
+                    }
+
+                });
+                state.dots = state.dots.filter((dot) => !dot.checked && dot.y > 0);
+
+                state.checkboxes.forEach((checkbox) => { checkbox.y += 5; })
+                state.checkboxes = state.checkboxes.filter((ch) => !ch.checked && ch.y < can.height);
+
+                state.checkedBoxes.forEach((ch, idx) => {
+                    if (ch.x > 15) { ch.x -= 5 }
+                    else { ch.x = 15; }
+                    if (ch.y > 25 * (idx + 1)) { ch.y -= 5 }
+                    else { ch.y = 25 * (idx + 1) }
+                })
+            }
+            window.setInterval(updateFrame, 50);
+            can.addEventListener("touchmove", (ev) => {
+                state.x = ev.touches[0].clientX;
+            });
+
+            can.addEventListener("touchstart", (ev) => {
+                state.x = ev.touches[0].clientX;
+            });
+
+            function adjustWindow() {
+                can.width = window.innerWidth;
+                can.height = window.innerHeight;
+                state.x = can.width / 2;
+            }
+
+            adjustWindow();
+            window.addEventListener("resize", adjustWindow);
+        })
+
+
+
+    </script>
+</html>
