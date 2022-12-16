@@ -2,10 +2,10 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Own your priviledge</title>
+        <title>Own your privilege</title>
         <link rel="manifest" href="manifest.json">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-title" content="Own your priviledge">
+        <meta name="apple-mobile-web-app-title" content="Own your privilege">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 
@@ -15,7 +15,7 @@
                 margin: 0;
                 font-family: sans-serif;
             }
-            canvas#can, main {
+            canvas#can, main, aside {
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -23,7 +23,10 @@
                 color: white;
             }
 
-            main {
+            button {
+                font-size: 2em;
+            }
+            main, aside {
                 width: calc(100% - 4em);
                 height: calc(100% - 4em);
                 padding: 2em;
@@ -36,14 +39,27 @@
             <p>
                 Je hebt alle 7 vinkjes verzameld!
             </p>
+            <input type="checkbox" checked disabled /> Spreekt A.B.N.<br />
+            <input type="checkbox" checked disabled /> Hoog opgeleid<br />
+            <input type="checkbox" checked disabled /> Hetero<br />
+            <input type="checkbox" checked disabled /> Man<br />
+            <input type="checkbox" checked disabled /> Blank<br />
+            <input type="checkbox" checked disabled /> Hoog opgeleide ouders<br />
+            <input type="checkbox" checked disabled /> Woont in Randstad<br />
+            <p>
+                Je mag nu je surprise uitpakken.
+            </p>
         </aside>
         <canvas id="can"></canvas>
         <main>
-            <h1>Welkom bij Own Your Priviledge</h1>
+            <h1>Welkom bij Own Your Privilege</h1>
             <ol>
                 <li>Beweeg de vinkschieter door met je vinger heen en weer te bewegen</li>
                 <li>Probeer alle aanvinkhokjes te raken</li>
             </ol>
+            <p style="text-align: center">
+                <button>Starten maar!</button>
+            </p>
         </main>
 
     </body>
@@ -53,30 +69,36 @@
         const pointWithinBox = ({x, y}, {x : bL, y : bT, w, h}) =>
             x >= bL && x <= bL + w && y >= bT && y <= bT + h;
         
-        document.querySelector("main").addEventListener("touchstart", (ev) => {
+        document.querySelector("main button").addEventListener("click", (ev) => {
+            document.querySelector("body").requestFullscreen();
+
             document.querySelector("main").style.display = "none";
             const ctx = can.getContext("2d");
             const state = {
                 x: 0,
                 dots: [],
                 checkboxes: [],
-                checkedBoxes: []
+                checkedBoxes: [],
+                done: false,
+                nextAnimFrame: -1
             }
 
             function render() {
-                requestAnimationFrame(render);
+                if (!state.done) {
+                    state.nextAnimFrame = requestAnimationFrame(render);
+                }
                 ctx.clearRect(0, 0, can.width, can.height);
 
                 ctx.fillStyle = "green";
                 state.dots.forEach((dot) => {
-                    ctx.fillRect(dot.x - 2, dot.y - 2, 4, 4);
+                    ctx.fillRect(dot.x - 4, dot.y - 4, 8, 8);
                 })
 
                 
                 ctx.strokeStyle = "white";
                 ctx.lineWidth = 1;
                 state.checkboxes.forEach((ch) => {
-                    ctx.strokeRect(ch.x - 5, ch.y - 5,  10, 10)
+                    ctx.strokeRect(ch.x - 10, ch.y - 10,  20, 20)
                 })
                 ctx.lineWidth = 2;
                 state.checkedBoxes.forEach((ch) => {
@@ -86,7 +108,7 @@
                 ctx.fillRect(state.x - 15, can.height - 10, 30, 10);
             }
 
-            requestAnimationFrame(render);
+            state.nextAnimFrame = requestAnimationFrame(render);
             function startDot() {
                 const dot = {
                     x: state.x,
@@ -96,8 +118,7 @@
                 state.dots.push(dot);
             }
 
-            window.setInterval(startDot, 1000);
-            startDot()
+            const dotInterval = window.setInterval(startDot, 1000);
             function startCheckbox() {
                 const checkbox = {
                     x: Math.floor(Math.random() * (can.width - 20)) + 10,
@@ -106,13 +127,18 @@
                 }
                 state.checkboxes.push(checkbox);
             }
-            window.setInterval(startCheckbox, 1000);
+            const checkInterval = window.setInterval(startCheckbox, 3000);
             startCheckbox();
 
+            function endGame() {
+                state.done = true;
+                cancelAnimationFrame(state.nextAnimFrame);
+                can.style.display = "none";
+            }
             function updateFrame() {
                 state.dots.forEach((dot) => { 
                     dot.y -= 10; 
-                    const hitCh = state.checkboxes.find((ch) => pointWithinBox(dot, {x: ch.x - 5 , y: ch.y - 5 , w: 10 , h: 10}));
+                    const hitCh = state.checkboxes.find((ch) => pointWithinBox(dot, {x: ch.x - 18, y: ch.y - 10 , w: 36 , h: 20}));
                     if (hitCh && state.checkedBoxes.length < 7) {
                         hitCh.checked = true;
                         dot.checked = true;
@@ -120,8 +146,12 @@
                             x: hitCh.x,
                             y: hitCh.y
                         })
+                        if (state.checkedBoxes.length === 1) {
+                            window.clearInterval(dotInterval);
+                            window.clearInterval(checkInterval);
+                            window.setTimeout(endGame, 2500);
+                        }
                     }
-
                 });
                 state.dots = state.dots.filter((dot) => !dot.checked && dot.y > 0);
 
@@ -129,9 +159,9 @@
                 state.checkboxes = state.checkboxes.filter((ch) => !ch.checked && ch.y < can.height);
 
                 state.checkedBoxes.forEach((ch, idx) => {
-                    if (ch.x > 15) { ch.x -= 5 }
+                    if (ch.x > 15) { ch.x -= 10 }
                     else { ch.x = 15; }
-                    if (ch.y > 25 * (idx + 1)) { ch.y -= 5 }
+                    if (ch.y > 25 * (idx + 1)) { ch.y -= 10 }
                     else { ch.y = 25 * (idx + 1) }
                 })
             }
