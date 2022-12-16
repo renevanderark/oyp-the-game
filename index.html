@@ -39,13 +39,13 @@
             <p>
                 Je hebt alle 7 vinkjes verzameld!
             </p>
-            <input type="checkbox" checked disabled /> Spreekt A.B.N.<br />
-            <input type="checkbox" checked disabled /> Hoog opgeleid<br />
-            <input type="checkbox" checked disabled /> Hetero<br />
-            <input type="checkbox" checked disabled /> Man<br />
-            <input type="checkbox" checked disabled /> Blank<br />
-            <input type="checkbox" checked disabled /> Hoog opgeleide ouders<br />
-            <input type="checkbox" checked disabled /> Woont in Randstad<br />
+            <img src="checkimg.png" /> Spreekt A.B.N.<br />
+            <img src="checkimg.png" /> Hoog opgeleid<br />
+            <img src="checkimg.png" /> Hetero<br />
+            <img src="checkimg.png" /> Man<br />
+            <img src="checkimg.png" /> Blank<br />
+            <img src="checkimg.png" /> Hoog opgeleide ouders<br />
+            <img src="checkimg.png" /> Woont in Randstad<br />
             <p>
                 Je mag nu je surprise uitpakken.
             </p>
@@ -54,7 +54,7 @@
         <main>
             <h1>Welkom bij Own Your Privilege</h1>
             <ol>
-                <li>Beweeg de vinkschieter door met je vinger heen en weer te bewegen</li>
+                <li>Tap op het scherm om de 'vinkjes schieter' te richten</li>
                 <li>Probeer alle aanvinkhokjes te raken</li>
             </ol>
             <p style="text-align: center">
@@ -100,9 +100,17 @@
                 state.checkboxes.forEach((ch) => {
                     ctx.strokeRect(ch.x - 10, ch.y - 10,  20, 20)
                 })
-                ctx.lineWidth = 2;
                 state.checkedBoxes.forEach((ch) => {
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "white";
                     ctx.strokeRect(ch.x - 10, ch.y - 10,  20, 20)
+                    ctx.strokeStyle = "green";
+                    ctx.beginPath();
+                    ctx.lineWidth = 5;
+                    ctx.moveTo(ch.x - 14, ch.y - 14);
+                    ctx.lineTo(ch.x, ch.y);
+                    ctx.lineTo(ch.x + 6, ch.y - 6);
+                    ctx.stroke();
                 })
                 ctx.fillStyle = "white";
                 ctx.fillRect(state.x - 15, can.height - 10, 30, 10);
@@ -118,7 +126,6 @@
                 state.dots.push(dot);
             }
 
-            const dotInterval = window.setInterval(startDot, 1000);
             function startCheckbox() {
                 const checkbox = {
                     x: Math.floor(Math.random() * (can.width - 20)) + 10,
@@ -146,8 +153,7 @@
                             x: hitCh.x,
                             y: hitCh.y
                         })
-                        if (state.checkedBoxes.length === 1) {
-                            window.clearInterval(dotInterval);
+                        if (state.checkedBoxes.length >= 7) {
                             window.clearInterval(checkInterval);
                             window.setTimeout(endGame, 2500);
                         }
@@ -155,7 +161,10 @@
                 });
                 state.dots = state.dots.filter((dot) => !dot.checked && dot.y > 0);
 
-                state.checkboxes.forEach((checkbox) => { checkbox.y += 5; })
+                state.checkboxes.forEach((checkbox) => { 
+                    checkbox.y += 5;
+                    checkbox.x += Math.cos(checkbox.y / 50) * 3; 
+                })
                 state.checkboxes = state.checkboxes.filter((ch) => !ch.checked && ch.y < can.height);
 
                 state.checkedBoxes.forEach((ch, idx) => {
@@ -166,12 +175,9 @@
                 })
             }
             window.setInterval(updateFrame, 50);
-            can.addEventListener("touchmove", (ev) => {
-                state.x = ev.touches[0].clientX;
-            });
-
             can.addEventListener("touchstart", (ev) => {
                 state.x = ev.touches[0].clientX;
+                startDot()
             });
 
             function adjustWindow() {
